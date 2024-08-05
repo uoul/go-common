@@ -1,3 +1,6 @@
+//go:build windows
+// +build windows
+
 package win
 
 import "golang.org/x/sys/windows/svc/debug"
