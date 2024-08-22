@@ -137,6 +137,25 @@ func QuerySingleTx[T any](tx *sql.Tx, resultMapper ResultMapper[T], sql string, 
 	return result
 }
 
+type TransactionScopeFunction[T any] func(ctx context.Context, tx *sql.Tx) (T, error)
+
+func ExecInTransactionContext[T any](ctx context.Context, cf IConnectionFactory, tsf TransactionScopeFunction[T]) (T, error) {
+	tx, err := cf.GetTransaction(ctx, nil)
+	if err != nil {
+		return *new(T), err
+	}
+	defer tx.Rollback()
+	result, err := tsf(ctx, tx)
+	if err != nil {
+		return result, err
+	}
+	err = tx.Commit()
+	if err != nil {
+		return result, err
+	}
+	return result, nil
+}
+
 func EffectedRowsMapper() ([]any, *EffectedRows) {
 	v := *new(EffectedRows)
 	return []any{&v}, &v
