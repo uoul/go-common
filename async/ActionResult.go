@@ -6,7 +6,7 @@ type ActionResult[T any] struct {
 }
 
 func NewErrorActionResult[T any](err error) ActionResult[T] {
-	return NewActionResult[T](*new(T), err)
+	return NewActionResult(*new(T), err)
 }
 
 func NewActionResult[T any](result T, err error) ActionResult[T] {
