@@ -1,9 +1,5 @@
 package log
 
-import (
-	"fmt"
-)
-
 type LogLevel int
 
 const (
@@ -16,12 +12,12 @@ const (
 	TRACE   LogLevel = iota
 )
 
-func StringToLogLevel(logLevel string) (LogLevel, error) {
+func StringToLogLevel(logLevel string, defaultLogLevel LogLevel) LogLevel {
 	lvl, exists := logLevelMap[logLevel]
 	if !exists {
-		return INFO, fmt.Errorf("loglevel with name %s does not exist", logLevel)
+		return defaultLogLevel
 	}
-	return lvl, nil
+	return lvl
 }
 
 var logLevelMap map[string]LogLevel = map[string]LogLevel{
