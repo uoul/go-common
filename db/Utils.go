@@ -13,6 +13,7 @@ type EffectedRows int
 func ExecStatement(connectionFactory IConnectionFactory, sql string, args ...any) chan async.ActionResult[EffectedRows] {
 	result := make(chan async.ActionResult[EffectedRows])
 	go func() {
+		defer close(result)
 		ctx := context.Background()
 		conn, err := connectionFactory.GetConnection(ctx)
 		if err != nil {
@@ -34,6 +35,7 @@ func ExecStatement(connectionFactory IConnectionFactory, sql string, args ...any
 func ExecStatementTx(tx *sql.Tx, sql string, args ...any) chan async.ActionResult[EffectedRows] {
 	result := make(chan async.ActionResult[EffectedRows])
 	go func() {
+		defer close(result)
 		r, err := tx.Exec(sql, args...)
 		if err != nil {
 			result <- async.ActionResult[EffectedRows]{Result: 0, Error: err}
@@ -48,6 +50,7 @@ func ExecStatementTx(tx *sql.Tx, sql string, args ...any) chan async.ActionResul
 func QueryStatement[T any](connectionFactory IConnectionFactory, resultMapper ResultMapper[T], sql string, args ...any) chan async.ActionResult[[]T] {
 	result := make(chan async.ActionResult[[]T])
 	go func(r chan async.ActionResult[[]T]) {
+		defer close(result)
 		ctx := context.Background()
 		conn, err := connectionFactory.GetConnection(ctx)
 		if err != nil {
@@ -79,6 +82,7 @@ func QueryStatement[T any](connectionFactory IConnectionFactory, resultMapper Re
 func QueryStatementTx[T any](tx *sql.Tx, resultMapper ResultMapper[T], sql string, args ...any) chan async.ActionResult[[]T] {
 	result := make(chan async.ActionResult[[]T])
 	go func(r chan async.ActionResult[[]T]) {
+		defer close(result)
 		rows, err := tx.Query(sql, args...)
 		if err != nil {
 			result <- async.ActionResult[[]T]{Result: []T{}, Error: err}
@@ -103,6 +107,7 @@ func QueryStatementTx[T any](tx *sql.Tx, resultMapper ResultMapper[T], sql strin
 func QuerySingle[T any](connectionFactory IConnectionFactory, resultMapper ResultMapper[T], sql string, args ...any) chan async.ActionResult[T] {
 	result := make(chan async.ActionResult[T])
 	go func() {
+		defer close(result)
 		ctx := context.Background()
 		conn, err := connectionFactory.GetConnection(ctx)
 		if err != nil {
@@ -125,6 +130,7 @@ func QuerySingle[T any](connectionFactory IConnectionFactory, resultMapper Resul
 func QuerySingleTx[T any](tx *sql.Tx, resultMapper ResultMapper[T], sql string, args ...any) chan async.ActionResult[T] {
 	result := make(chan async.ActionResult[T])
 	go func() {
+		defer close(result)
 		row := tx.QueryRow(sql, args...)
 		fields, entry := resultMapper()
 		err := row.Scan(fields...)
