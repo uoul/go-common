@@ -80,6 +80,32 @@ func (authenticator *KeyCloakAuthenticator[T]) GetIdentity(httpHeader http.Heade
 	}
 }
 
+// This Method maps the given token to an object of IUserIdentity
+//
+// IN:
+//   - token: jwt-token
+//
+// OUT:
+//   - IUserIdentity: UserIdentity of type T
+//   - error: if any error occures, the error out will report the issue
+func (authenticator *KeyCloakAuthenticator[T]) GetIdentityOfAccessToken(token string) (T, error) {
+	accessToken, err := jwt.Parse(token, authenticator.keyFunc)
+	if err != nil {
+		return *new(T), authError.NewAuthenticationError("invalid token - %v", err)
+	}
+	claims := accessToken.Claims.(jwt.MapClaims)
+	j, err := json.Marshal(claims)
+	if err != nil {
+		return *new(T), authError.NewAuthenticationError("failed to marshal token-claims - %v", err)
+	}
+	var customClaims T
+	err = json.Unmarshal(j, &customClaims)
+	if err != nil {
+		return *new(T), authError.NewAuthenticationError("failed to unmarshal token-claims - %v", err)
+	}
+	return customClaims, nil
+}
+
 // -------------------------------------------------------------------
 // Private helper methods/functions
 // -------------------------------------------------------------------
