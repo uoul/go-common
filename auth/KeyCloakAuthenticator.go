@@ -1,15 +1,14 @@
-package oidc
+package auth
 
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/lestrrat-go/jwx/jwk"
-	authError "github.com/uoul/go-common/auth/error"
-	"github.com/uoul/go-common/auth/iface"
 )
 
 // -------------------------------------------------------------------
@@ -22,7 +21,7 @@ const (
 // -------------------------------------------------------------------
 // Typedefinitions
 // -------------------------------------------------------------------
-type KeyCloakAuthenticator[T iface.IUserIdentity] struct {
+type KeyCloakAuthenticator[T IUserIdentity] struct {
 	jwksUri string
 	jwkSet  jwk.Set
 }
@@ -38,7 +37,7 @@ type KeyCloakAuthenticator[T iface.IUserIdentity] struct {
 //
 // OUT:
 //   - IAuthenticator: new instance of IAuthenticator(means in this case Oidc)
-func NewKeyCloakAuthenticator[T iface.IUserIdentity](jwksUri string) iface.IAuthenticator[T] {
+func NewKeyCloakAuthenticator[T IUserIdentity](jwksUri string) IAuthenticator[T] {
 	return &KeyCloakAuthenticator[T]{
 		jwksUri: jwksUri,
 		jwkSet:  nil,
@@ -57,26 +56,26 @@ func NewKeyCloakAuthenticator[T iface.IUserIdentity](jwksUri string) iface.IAuth
 func (authenticator *KeyCloakAuthenticator[T]) GetIdentity(httpHeader http.Header) (T, error) {
 	authHeader, found := httpHeader[AUTH_HEADER]
 	if !found {
-		return *new(T), authError.NewAuthenticationError("failed to get authentication header")
+		return *new(T), fmt.Errorf("failed to get authentication header")
 	}
 	if rawToken, found := strings.CutPrefix(authHeader[0], "Bearer "); found {
 		accessToken, err := jwt.Parse(rawToken, authenticator.keyFunc)
 		if err != nil {
-			return *new(T), authError.NewAuthenticationError("invalid token - %v", err)
+			return *new(T), err
 		}
 		claims := accessToken.Claims.(jwt.MapClaims)
 		j, err := json.Marshal(claims)
 		if err != nil {
-			return *new(T), authError.NewAuthenticationError("failed to marshal token-claims - %v", err)
+			return *new(T), err
 		}
 		var customClaims T
 		err = json.Unmarshal(j, &customClaims)
 		if err != nil {
-			return *new(T), authError.NewAuthenticationError("failed to unmarshal token-claims - %v", err)
+			return *new(T), err
 		}
 		return customClaims, nil
 	} else {
-		return *new(T), authError.NewAuthenticationError("invalid authorization header - header has to start with \"Bearer \"")
+		return *new(T), fmt.Errorf("invalid authorization header - header has to start with \"Bearer \"")
 	}
 }
 
@@ -91,17 +90,17 @@ func (authenticator *KeyCloakAuthenticator[T]) GetIdentity(httpHeader http.Heade
 func (authenticator *KeyCloakAuthenticator[T]) GetIdentityOfAccessToken(token string) (T, error) {
 	accessToken, err := jwt.Parse(token, authenticator.keyFunc)
 	if err != nil {
-		return *new(T), authError.NewAuthenticationError("invalid token - %v", err)
+		return *new(T), err
 	}
 	claims := accessToken.Claims.(jwt.MapClaims)
 	j, err := json.Marshal(claims)
 	if err != nil {
-		return *new(T), authError.NewAuthenticationError("failed to marshal token-claims - %v", err)
+		return *new(T), err
 	}
 	var customClaims T
 	err = json.Unmarshal(j, &customClaims)
 	if err != nil {
-		return *new(T), authError.NewAuthenticationError("failed to unmarshal token-claims - %v", err)
+		return *new(T), err
 	}
 	return customClaims, nil
 }
@@ -116,7 +115,7 @@ func (authenticator *KeyCloakAuthenticator[T]) keyFunc(t *jwt.Token) (any, error
 	}
 	keyID, ok := t.Header["kid"].(string)
 	if !ok {
-		return nil, authError.NewAuthenticationError("expecting JWT header to have string kid")
+		return nil, fmt.Errorf("expecting JWT header to have string kid")
 	}
 	if key, found := set.LookupKeyID(keyID); found {
 		var pubkey any
@@ -126,7 +125,7 @@ func (authenticator *KeyCloakAuthenticator[T]) keyFunc(t *jwt.Token) (any, error
 		}
 		return pubkey, nil
 	}
-	return nil, authError.NewAuthenticationError("unable to find key %q", keyID)
+	return nil, fmt.Errorf("unable to find key %q", keyID)
 }
 
 func (authenticator *KeyCloakAuthenticator[T]) getJwkSet() (jwk.Set, error) {

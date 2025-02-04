@@ -1,4 +1,4 @@
-package iface
+package auth
 
 import "net/http"
 

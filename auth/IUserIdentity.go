@@ -1,4 +1,4 @@
-package iface
+package auth
 
 type IUserIdentity interface {
 	GetUsername() string
