@@ -17,3 +17,12 @@ func Filter[T any](col []T, pred func(T) bool) []T {
 	}
 	return r
 }
+
+func Contains[T any](col []T, pred func(T) bool) bool {
+	for _, e := range col {
+		if pred(e) {
+			return true
+		}
+	}
+	return false
+}
