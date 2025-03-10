@@ -47,6 +47,7 @@ require (
 	github.com/lestrrat-go/iter v1.0.2 // indirect
 	github.com/lestrrat-go/option v1.0.1 // indirect
 	github.com/lib/pq v1.10.9
+	github.com/mattn/go-sqlite3 v1.14.24
 	github.com/pkg/errors v0.9.1 // indirect
 	golang.org/x/crypto v0.25.0 // indirect
 )
