@@ -86,3 +86,15 @@ func (m *HealthMonitor) readynessProbeGin(ctx *gin.Context) {
 	}
 	ctx.Status(http.StatusOK)
 }
+
+// DoReadynessChecks() executes all registerd readyness checks and returns
+// a slice of all occured errors
+func (m *HealthMonitor) DoReadynessChecks() []error {
+	r := []error{}
+	for name, check := range m.readynessChecks {
+		if err := check(); err != nil {
+			r = append(r, fmt.Errorf("ReadynessProbe %s failed - %v", name, err))
+		}
+	}
+	return r
+}
