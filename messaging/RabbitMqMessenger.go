@@ -244,11 +244,11 @@ func (r *RabbitMqMessenger) declareAndBindQueueForSub(ch *amqp.Channel, key asyn
 	// Declare queue for subscibtion
 	q, err := ch.QueueDeclare(
 		"",
-		false,
-		true,
-		false,
-		false,
-		nil,
+		false, // Durable
+		true,  // AutoDelete
+		false, // Exclusive
+		false, // No-Wait
+		nil,   // arguments
 	)
 	if err != nil {
 		return err
@@ -258,7 +258,7 @@ func (r *RabbitMqMessenger) declareAndBindQueueForSub(ch *amqp.Channel, key asyn
 		q.Name,
 		sub.exchange.RoutingKey,
 		sub.exchange.Exchange,
-		false,
+		false, // No-Wait
 		nil,
 	)
 	if err != nil {
@@ -268,10 +268,10 @@ func (r *RabbitMqMessenger) declareAndBindQueueForSub(ch *amqp.Channel, key asyn
 	consumer, err := ch.Consume(
 		q.Name,
 		"",
-		true,
-		false,
-		false,
-		false,
+		true,  // Auto-Ack
+		false, // Exclusive
+		false, // NoLocal
+		false, // No-Wait
 		nil,
 	)
 	if err != nil {
