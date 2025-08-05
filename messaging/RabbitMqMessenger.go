@@ -2,13 +2,13 @@ package messaging
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"reflect"
 	"time"
 
 	"github.com/uoul/go-common/async"
 	"github.com/uoul/go-common/log"
+	"github.com/uoul/go-common/serialization"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -29,6 +29,7 @@ type RabbitMqMessenger struct {
 	maxRetries    uint
 	retryInterval time.Duration
 	streamBuffer  uint
+	serializer    serialization.ISerializer
 
 	subscriptions map[async.Stream[amqp.Delivery]]subsciption
 
@@ -67,13 +68,13 @@ type internalMsg struct {
 
 // Publish implements IMessenger.
 func (r *RabbitMqMessenger) Publish(topic RabbitMqExchange, msg any) error {
-	jsonMsg, err := json.Marshal(msg)
+	serializedMsg, err := r.serializer.Marshal(msg)
 	if err != nil {
 		return err
 	}
 	r.sendMsg <- internalMsg{
 		Exchange: topic,
-		Body:     jsonMsg,
+		Body:     serializedMsg,
 	}
 	return nil
 }
@@ -154,9 +155,8 @@ func (r *RabbitMqMessenger) run() error {
 				false,
 				false,
 				amqp.Publishing{
-					Timestamp:   time.Now(),
-					ContentType: "application/json",
-					Body:        msg.Body,
+					Timestamp: time.Now(),
+					Body:      msg.Body,
 				},
 			)
 			if err != nil {
@@ -331,6 +331,34 @@ func (r *RabbitMqMessenger) createSelectCases(connClosed chan *amqp.Error) []ref
 }
 
 // -----------------------------------------------------------------------------------
+// Options
+// -----------------------------------------------------------------------------------
+
+func WithRabbitMqSerializer(serializer serialization.ISerializer) func(*RabbitMqMessenger) {
+	return func(rmm *RabbitMqMessenger) {
+		rmm.serializer = serializer
+	}
+}
+
+func WithRabbitMqRetryInterval(interval time.Duration) func(*RabbitMqMessenger) {
+	return func(rmm *RabbitMqMessenger) {
+		rmm.retryInterval = interval
+	}
+}
+
+func WithRabbitMqMaxRetries(retries uint) func(*RabbitMqMessenger) {
+	return func(rmm *RabbitMqMessenger) {
+		rmm.maxRetries = retries
+	}
+}
+
+func WithRabbitMqStreamBufferSize(size uint) func(*RabbitMqMessenger) {
+	return func(rmm *RabbitMqMessenger) {
+		rmm.streamBuffer = size
+	}
+}
+
+// -----------------------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------------------
 
@@ -346,12 +374,13 @@ func NewRabbitMqMessenger(ctx context.Context, logger log.ILogger, host string, 
 
 		retryInterval: 10 * time.Second,
 		maxRetries:    10,
-		subscriptions: map[async.Stream[amqp.Delivery]]subsciption{},
 		streamBuffer:  50,
+		serializer:    serialization.NewJSONSerializer(),
 
-		sendMsg:   make(chan internalMsg, 50),
-		addSub:    make(chan subsciptionReq, 50),
-		removeSub: make(chan async.Stream[amqp.Delivery], 50),
+		subscriptions: map[async.Stream[amqp.Delivery]]subsciption{},
+		sendMsg:       make(chan internalMsg, 50),
+		addSub:        make(chan subsciptionReq, 50),
+		removeSub:     make(chan async.Stream[amqp.Delivery], 50),
 	}
 	// Apply options
 	for _, o := range opts {
