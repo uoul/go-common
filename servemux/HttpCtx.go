@@ -110,8 +110,10 @@ func (h *HttpCtx[T]) Abort() {
 	h.aborted = true
 }
 
-func (h *HttpCtx[T]) IsAborted() bool {
-	return h.aborted
+func (h *HttpCtx[T]) AbortWithResponse(statusCode int, body any) {
+	h.SetStatusCode(statusCode)
+	h.SetResponseBody(body)
+	h.Abort()
 }
 
 func (h *HttpCtx[T]) GetResponseBody() any {

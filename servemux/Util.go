@@ -21,7 +21,7 @@ func Handle[T any](config *HandlerConfig, handlers ...HandlerFunc[T]) http.Handl
 		// Call handlers
 		for _, handler := range handlers {
 			handler(httpCtx)
-			if httpCtx.IsAborted() {
+			if httpCtx.aborted {
 				break
 			}
 		}
