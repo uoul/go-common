@@ -21,6 +21,9 @@ func Handle[T any](config *HandlerConfig, handlers ...HandlerFunc[T]) http.Handl
 		// Call handlers
 		for _, handler := range handlers {
 			handler(httpCtx)
+			if httpCtx.IsAborted() {
+				break
+			}
 		}
 		// Parse Response body
 		respBody, _ := config.serializer.Marshal(

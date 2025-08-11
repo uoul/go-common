@@ -26,6 +26,7 @@ type HttpCtx[T any] struct {
 
 	statusCode   int
 	responseBody any
+	aborted      bool
 	errors       []error
 }
 
@@ -103,6 +104,14 @@ func (h *HttpCtx[T]) Errors() []error {
 
 func (h *HttpCtx[T]) Error(err error) {
 	h.errors = append(h.errors, err)
+}
+
+func (h *HttpCtx[T]) Abort() {
+	h.aborted = true
+}
+
+func (h *HttpCtx[T]) IsAborted() bool {
+	return h.aborted
 }
 
 func (h *HttpCtx[T]) GetResponseBody() any {
@@ -188,6 +197,7 @@ func NewHttpCtx[T any](req *http.Request, responseWriter http.ResponseWriter, se
 		decoder:      schema.NewDecoder(),
 		responseBody: nil,
 		errors:       []error{},
+		aborted:      false,
 	}
 	// Parse Form data if form data encoding
 	contentType := h.GetHeader("Content-Type")
