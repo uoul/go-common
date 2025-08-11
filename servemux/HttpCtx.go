@@ -65,10 +65,6 @@ func (h *HttpCtx[T]) GetFiles() map[string][]*multipart.FileHeader {
 	return h.req.MultipartForm.File
 }
 
-func (h *HttpCtx[T]) GetHeader(name string) []string {
-	return h.req.Header[name]
-}
-
 func (h *HttpCtx[T]) GetQueryParam(name string) string {
 	return h.req.URL.Query().Get(name)
 }
@@ -83,6 +79,22 @@ func (h *HttpCtx[T]) GetStatusCode() int {
 
 func (h *HttpCtx[T]) SetStatusCode(code int) {
 	h.statusCode = code
+}
+
+func (h *HttpCtx[T]) GetHeader(name string) []string {
+	return h.req.Header[name]
+}
+
+func (h *HttpCtx[T]) AddHeader(name string, value string) {
+	h.respWriter.Header().Add(name, value)
+}
+
+func (h *HttpCtx[T]) SetHeader(name string, value string) {
+	h.respWriter.Header().Set(name, value)
+}
+
+func (h *HttpCtx[T]) DelHeader(name string) {
+	h.respWriter.Header().Del(name)
 }
 
 func (h *HttpCtx[T]) Errors() []error {
