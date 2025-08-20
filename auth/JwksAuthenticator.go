@@ -23,7 +23,7 @@ const (
 // -------------------------------------------------------------------
 // Typedefinitions
 // -------------------------------------------------------------------
-type KeyCloakAuthenticator[T IUserIdentity] struct {
+type JwksAuthenticator[T any] struct {
 	jwksUri         string
 	jwkSet          jwk.Set
 	lastJwksRefresh time.Time
@@ -43,8 +43,8 @@ type KeyCloakAuthenticator[T IUserIdentity] struct {
 //
 // OUT:
 //   - IAuthenticator: new instance of IAuthenticator(means in this case Oidc)
-func NewKeyCloakAuthenticator[T IUserIdentity](jwksUri string) IAuthenticator[T] {
-	return &KeyCloakAuthenticator[T]{
+func NewJwksAuthenticator[T any](jwksUri string) IAuthenticator[T] {
+	return &JwksAuthenticator[T]{
 		jwksUri:         jwksUri,
 		jwkSet:          nil,
 		lastJwksRefresh: time.Now(),
@@ -63,13 +63,13 @@ func NewKeyCloakAuthenticator[T IUserIdentity](jwksUri string) IAuthenticator[T]
 // OUT:
 //   - IUserIdentity: UserIdentity of type T
 //   - error: if any error occures, the error out will report the issue
-func (a *KeyCloakAuthenticator[T]) GetIdentity(httpHeader http.Header) (T, error) {
+func (a *JwksAuthenticator[T]) GetIdentityFromAuthorizationHeader(httpHeader http.Header) (T, error) {
 	authHeader, found := httpHeader[AUTH_HEADER]
 	if !found {
 		return *new(T), fmt.Errorf("failed to get authentication header")
 	}
 	if rawToken, found := strings.CutPrefix(authHeader[0], "Bearer "); found {
-		identity, err := a.GetIdentityOfAccessToken(rawToken)
+		identity, err := a.GetIdentityFromAccessToken(rawToken)
 		if err != nil {
 			return *new(T), err
 		}
@@ -87,7 +87,7 @@ func (a *KeyCloakAuthenticator[T]) GetIdentity(httpHeader http.Header) (T, error
 // OUT:
 //   - IUserIdentity: UserIdentity of type T
 //   - error: if any error occures, the error out will report the issue
-func (a *KeyCloakAuthenticator[T]) GetIdentityOfAccessToken(token string) (T, error) {
+func (a *JwksAuthenticator[T]) GetIdentityFromAccessToken(token string) (T, error) {
 	// Get JsonWebKeySet
 	jwkSet, err := a.getJwkSet()
 	if err != nil {
@@ -124,7 +124,7 @@ func (a *KeyCloakAuthenticator[T]) GetIdentityOfAccessToken(token string) (T, er
 // -------------------------------------------------------------------
 // Private helper methods/functions
 // -------------------------------------------------------------------
-func (a *KeyCloakAuthenticator[T]) getJwkSet() (jwk.Set, error) {
+func (a *JwksAuthenticator[T]) getJwkSet() (jwk.Set, error) {
 	if a.jwkSet == nil || time.Since(a.lastJwksRefresh) > a.jwksRefreshInterval {
 		ctx, cancel := context.WithTimeout(context.Background(), a.requestTimeout)
 		defer cancel()

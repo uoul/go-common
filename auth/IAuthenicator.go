@@ -2,7 +2,7 @@ package auth
 
 import "net/http"
 
-type IAuthenticator[T IUserIdentity] interface {
-	GetIdentity(httpHeader http.Header) (T, error)
-	GetIdentityOfAccessToken(token string) (T, error)
+type IAuthenticator[T any] interface {
+	GetIdentityFromAuthorizationHeader(httpHeader http.Header) (T, error)
+	GetIdentityFromAccessToken(token string) (T, error)
 }
