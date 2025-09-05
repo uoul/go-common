@@ -157,6 +157,14 @@ func (h *HttpCtx[T]) Stream(step func() (ServerSentEvent, bool)) (bool, error) {
 	}
 }
 
+func (h *HttpCtx[T]) GetRawRequest() *http.Request {
+	return h.req
+}
+
+func (h *HttpCtx[T]) GetRawResponseWriter() http.ResponseWriter {
+	return h.respWriter
+}
+
 // -----------------------------------------------------------------------------------------------------------
 // Private
 // -----------------------------------------------------------------------------------------------------------
