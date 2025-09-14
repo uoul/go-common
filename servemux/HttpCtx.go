@@ -176,11 +176,7 @@ func (h *HttpCtx[T]) parseFormData(data url.Values) (T, error) {
 }
 
 func (h *HttpCtx[T]) parseBody() (T, error) {
-	reader, err := h.req.GetBody()
-	if err != nil {
-		return *new(T), err
-	}
-	raw, err := io.ReadAll(reader)
+	raw, err := io.ReadAll(h.req.Body)
 	if err != nil {
 		return *new(T), err
 	}
