@@ -246,7 +246,7 @@ func (r *RabbitMqMessenger) declareAndBindQueueForSub(ch *amqp.Channel, key asyn
 		"",
 		false, // Durable
 		true,  // AutoDelete
-		false, // Exclusive
+		true,  // Exclusive
 		false, // No-Wait
 		nil,   // arguments
 	)
@@ -269,7 +269,7 @@ func (r *RabbitMqMessenger) declareAndBindQueueForSub(ch *amqp.Channel, key asyn
 		q.Name,
 		"",
 		true,  // Auto-Ack
-		false, // Exclusive
+		true,  // Exclusive
 		false, // NoLocal
 		false, // No-Wait
 		nil,
