@@ -114,6 +114,7 @@ func (r *RabbitMqMessenger) run() error {
 	ch.NotifyClose(channelClosed)
 	// Init already registered subs
 	r.initCurrentSubscriptions(ch)
+	r.logger.Infof("Connection to rabbitmq(host: %s, port: %d) estabished", r.host, r.port)
 	// Run
 	for {
 		// Create select-cases
