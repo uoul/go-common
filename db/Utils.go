@@ -10,7 +10,7 @@ import (
 type ResultMapper[T any] func() ([]any, *T)
 type EffectedRows int
 
-func ExecStatement(connectionFactory IConnectionFactory, sql string, args ...any) chan async.ActionResult[EffectedRows] {
+func ExecStatement(connectionFactory IConnectionFactory, sql string, args ...any) <-chan async.ActionResult[EffectedRows] {
 	result := make(chan async.ActionResult[EffectedRows])
 	go func() {
 		defer close(result)
@@ -32,7 +32,7 @@ func ExecStatement(connectionFactory IConnectionFactory, sql string, args ...any
 	return result
 }
 
-func ExecStatementTx(tx *sql.Tx, sql string, args ...any) chan async.ActionResult[EffectedRows] {
+func ExecStatementTx(tx *sql.Tx, sql string, args ...any) <-chan async.ActionResult[EffectedRows] {
 	result := make(chan async.ActionResult[EffectedRows])
 	go func() {
 		defer close(result)
@@ -47,7 +47,7 @@ func ExecStatementTx(tx *sql.Tx, sql string, args ...any) chan async.ActionResul
 	return result
 }
 
-func QueryStatement[T any](connectionFactory IConnectionFactory, resultMapper ResultMapper[T], sql string, args ...any) chan async.ActionResult[[]T] {
+func QueryStatement[T any](connectionFactory IConnectionFactory, resultMapper ResultMapper[T], sql string, args ...any) <-chan async.ActionResult[[]T] {
 	result := make(chan async.ActionResult[[]T])
 	go func(r chan async.ActionResult[[]T]) {
 		defer close(result)
@@ -79,7 +79,7 @@ func QueryStatement[T any](connectionFactory IConnectionFactory, resultMapper Re
 	return result
 }
 
-func QueryStatementTx[T any](tx *sql.Tx, resultMapper ResultMapper[T], sql string, args ...any) chan async.ActionResult[[]T] {
+func QueryStatementTx[T any](tx *sql.Tx, resultMapper ResultMapper[T], sql string, args ...any) <-chan async.ActionResult[[]T] {
 	result := make(chan async.ActionResult[[]T])
 	go func(r chan async.ActionResult[[]T]) {
 		defer close(result)
@@ -104,7 +104,7 @@ func QueryStatementTx[T any](tx *sql.Tx, resultMapper ResultMapper[T], sql strin
 	return result
 }
 
-func QuerySingle[T any](connectionFactory IConnectionFactory, resultMapper ResultMapper[T], sql string, args ...any) chan async.ActionResult[T] {
+func QuerySingle[T any](connectionFactory IConnectionFactory, resultMapper ResultMapper[T], sql string, args ...any) <-chan async.ActionResult[T] {
 	result := make(chan async.ActionResult[T])
 	go func() {
 		defer close(result)
@@ -127,7 +127,7 @@ func QuerySingle[T any](connectionFactory IConnectionFactory, resultMapper Resul
 	return result
 }
 
-func QuerySingleTx[T any](tx *sql.Tx, resultMapper ResultMapper[T], sql string, args ...any) chan async.ActionResult[T] {
+func QuerySingleTx[T any](tx *sql.Tx, resultMapper ResultMapper[T], sql string, args ...any) <-chan async.ActionResult[T] {
 	result := make(chan async.ActionResult[T])
 	go func() {
 		defer close(result)
